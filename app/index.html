@@ -75,16 +75,17 @@
       <p id="aviso-gasto" class="aviso" role="status" hidden></p>
     </section>
 
-    <!-- Assistente: chega na sexta -->
+    <!-- Assistente -->
     <section class="cartao assistente" aria-label="Assistente">
-      <h2>Assistente <span class="selo">chega na sexta</span></h2>
-      <p class="sutil">Em breve: lance um gasto por uma frase ou pela foto do cupom.</p>
+      <h2>Assistente</h2>
+      <p class="sutil">Escreva um gasto ou uma pergunta, ou mande a foto do cupom. A foto não é guardada.</p>
       <form id="form-assistente" novalidate>
-        <input id="frase" type="text" placeholder="Ex.: 32 reais na farmácia" autocomplete="off">
+        <input id="frase" type="text" placeholder="Ex.: mercado 50 hoje" autocomplete="off" maxlength="500">
         <div class="linha-botoes">
-          <button type="submit" class="botao secundario">Enviar</button>
+          <button type="submit" id="botao-enviar" class="botao secundario">Enviar</button>
           <button type="button" id="botao-foto" class="botao secundario">Foto do cupom</button>
         </div>
+        <input id="arquivo-foto" type="file" accept="image/*" hidden>
       </form>
       <p id="aviso-assistente" class="aviso" role="status" hidden></p>
     </section>

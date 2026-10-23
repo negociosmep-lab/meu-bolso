@@ -405,11 +405,114 @@
     }
   }
 
-  // ---------- Assistente (chega na sexta) ----------
+  // ---------- Assistente ----------
 
-  function avisoAssistente(evento) {
-    if (evento) evento.preventDefault();
-    avisar($("aviso-assistente"), "O assistente chega na sexta.", true);
+  const LADO_MAXIMO = 1600;
+
+  function reduzirFoto(arquivo) {
+    // Reduz para no máximo 1600 px no lado maior e converte em JPEG.
+    // A foto só existe na memória do navegador; nada é guardado.
+    return new Promise((resolver, rejeitar) => {
+      const endereco = URL.createObjectURL(arquivo);
+      const img = new Image();
+      img.onload = () => {
+        const escala = Math.min(1, LADO_MAXIMO / Math.max(img.naturalWidth, img.naturalHeight));
+        const largura = Math.round(img.naturalWidth * escala);
+        const altura = Math.round(img.naturalHeight * escala);
+        const tela = document.createElement("canvas");
+        tela.width = largura;
+        tela.height = altura;
+        tela.getContext("2d").drawImage(img, 0, 0, largura, altura);
+        URL.revokeObjectURL(endereco);
+        const dataUrl = tela.toDataURL("image/jpeg", 0.82);
+        resolver(dataUrl.slice(dataUrl.indexOf(",") + 1));
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(endereco);
+        rejeitar(new Error("foto"));
+      };
+      img.src = endereco;
+    });
+  }
+
+  function travarAssistente(travar) {
+    $("botao-enviar").disabled = travar;
+    $("botao-foto").disabled = travar;
+  }
+
+  async function perguntarAoAssistente(mensagem, imagem) {
+    const aviso = $("aviso-assistente");
+    travarAssistente(true);
+    avisar(aviso, imagem ? "Lendo o cupom…" : "Pensando…", true);
+    try {
+      const { data } = await cliente.auth.getSession();
+      const token = data && data.session && data.session.access_token;
+      if (!token) {
+        avisar(aviso, "Seu login venceu. Toque em Sair e entre de novo.");
+        return;
+      }
+
+      let resposta;
+      try {
+        resposta = await fetch("/api/assistente", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            mensagem,
+            imagem: imagem || null,
+            mime: imagem ? "image/jpeg" : null,
+            categorias: cfg.CATEGORIAS || []
+          })
+        });
+      } catch (erro) {
+        avisar(aviso, frase(erro));
+        return;
+      }
+
+      let corpo = null;
+      try { corpo = await resposta.json(); } catch (erro) { corpo = null; }
+      if (!corpo) {
+        avisar(aviso, "O assistente não respondeu. Ele só funciona no app publicado na Netlify; tente de novo lá.");
+        return;
+      }
+      if (!resposta.ok || corpo.erro) {
+        avisar(aviso, corpo.erro || "O assistente não conseguiu agora. Tente de novo ou lance à mão.");
+        return;
+      }
+
+      avisar(aviso, corpo.resposta, true);
+      if (corpo.lancou) {
+        $("frase").value = "";
+        await carregarGastos();
+      }
+    } finally {
+      travarAssistente(false);
+    }
+  }
+
+  function enviarFrase(evento) {
+    evento.preventDefault();
+    const mensagem = $("frase").value.trim();
+    if (!mensagem) {
+      avisar($("aviso-assistente"), "Escreva um gasto ou uma pergunta, por exemplo: mercado 50 hoje.");
+      return;
+    }
+    perguntarAoAssistente(mensagem, null);
+  }
+
+  async function enviarFoto() {
+    const campo = $("arquivo-foto");
+    const arquivo = campo.files && campo.files[0];
+    campo.value = "";
+    if (!arquivo) return;
+    let imagem;
+    try {
+      imagem = await reduzirFoto(arquivo);
+    } catch (erro) {
+      avisar($("aviso-assistente"), "Não consegui abrir essa foto. Tire outra foto do cupom ou escolha uma imagem JPG ou PNG.");
+      return;
+    }
+    perguntarAoAssistente($("frase").value.trim(), imagem);
   }
 
   // ---------- Início ----------
@@ -419,8 +522,9 @@
     $("botao-criar").addEventListener("click", criarConta);
     $("botao-sair").addEventListener("click", sair);
     $("form-gasto").addEventListener("submit", salvarGasto);
-    $("form-assistente").addEventListener("submit", avisoAssistente);
-    $("botao-foto").addEventListener("click", () => avisoAssistente());
+    $("form-assistente").addEventListener("submit", enviarFrase);
+    $("botao-foto").addEventListener("click", () => $("arquivo-foto").click());
+    $("arquivo-foto").addEventListener("change", enviarFoto);
     desenharCategorias();
 
     if (!window.supabase || !cfg.SUPABASE_URL || !cfg.SUPABASE_CHAVE_PUBLICA) {
