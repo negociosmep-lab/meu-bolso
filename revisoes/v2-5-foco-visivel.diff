@@ -1,0 +1,12 @@
+diff --git a/app/estilo.css b/app/estilo.css
+index e81047f..229c5f6 100644
+--- a/app/estilo.css
++++ b/app/estilo.css
+@@ -71,6 +71,7 @@ input {
+   outline: none;
+ }
+ input:focus { border-color: var(--verde); }
++input:focus-visible { outline: 3px solid var(--verde); outline-offset: 2px; }
+ input[type="date"] { color-scheme: dark; }
+ .campo-valor { font-size: 1.6rem; font-weight: 700; }
+ 

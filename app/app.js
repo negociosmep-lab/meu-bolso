@@ -508,6 +508,8 @@
         $("frase").value = "";
         await carregarGastos();
       }
+    } catch (erro) {
+      avisar(aviso, "Não consegui falar com o assistente. Tente de novo ou lance à mão.");
     } finally {
       travarAssistente(false);
     }

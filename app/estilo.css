@@ -38,7 +38,7 @@ h2 { font-size: 1rem; margin: 0 0 12px; color: var(--sutil); font-weight: 600; }
 p { margin: 0; }
 
 .sutil { color: var(--sutil); font-size: 0.9rem; }
-.rotulo { color: var(--sutil); font-size: 0.85rem; }
+.rotulo { color: var(--sutil); font-size: 0.9rem; }
 
 /* Entrada */
 .entrada-caixa {
@@ -71,6 +71,7 @@ input {
   outline: none;
 }
 input:focus { border-color: var(--verde); }
+input:focus-visible { outline: 3px solid var(--verde); outline-offset: 2px; }
 input[type="date"] { color-scheme: dark; }
 .campo-valor { font-size: 1.6rem; font-weight: 700; }
 
@@ -97,6 +98,11 @@ input[type="date"] { color-scheme: dark; }
   font-size: 1rem;
   font-weight: 600;
   padding: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
@@ -218,19 +224,19 @@ input[type="date"] { color-scheme: dark; }
 .lista li {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   padding: 10px 0;
   border-top: 1px solid var(--borda);
 }
 .lista li:first-child { border-top: none; padding-top: 0; }
 .item-texto { flex: 1; min-width: 0; }
 .item-texto p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.item-detalhe { color: var(--sutil); font-size: 0.85rem; }
+.item-detalhe { color: var(--sutil); font-size: 0.9rem; }
 .item-valor { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .botao-apagar {
   flex: none;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   font-size: 1.1rem;
   color: var(--sutil);
   background: transparent;

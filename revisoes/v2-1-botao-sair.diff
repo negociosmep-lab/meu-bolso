@@ -1,0 +1,16 @@
+diff --git a/app/estilo.css b/app/estilo.css
+index b55a216..80460e3 100644
+--- a/app/estilo.css
++++ b/app/estilo.css
+@@ -97,6 +97,11 @@ input[type="date"] { color-scheme: dark; }
+   font-size: 1rem;
+   font-weight: 600;
+   padding: 8px;
++  min-width: 44px;
++  min-height: 44px;
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
+   cursor: pointer;
+ }
+ 

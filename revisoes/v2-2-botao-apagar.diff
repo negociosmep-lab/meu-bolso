@@ -1,0 +1,24 @@
+diff --git a/app/estilo.css b/app/estilo.css
+index 80460e3..2eaea78 100644
+--- a/app/estilo.css
++++ b/app/estilo.css
+@@ -223,7 +223,7 @@ input[type="date"] { color-scheme: dark; }
+ .lista li {
+   display: flex;
+   align-items: center;
+-  gap: 10px;
++  gap: 14px;
+   padding: 10px 0;
+   border-top: 1px solid var(--borda);
+ }
+@@ -234,8 +234,8 @@ input[type="date"] { color-scheme: dark; }
+ .item-valor { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+ .botao-apagar {
+   flex: none;
+-  width: 40px;
+-  height: 40px;
++  width: 44px;
++  height: 44px;
+   font-size: 1.1rem;
+   color: var(--sutil);
+   background: transparent;
