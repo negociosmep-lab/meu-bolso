@@ -1,0 +1,84 @@
+diff --git a/app/app.js b/app/app.js
+index 91c176f..9321132 100644
+--- a/app/app.js
++++ b/app/app.js
+@@ -7,8 +7,10 @@
+   const cfg = window.MEU_BOLSO || {};
+   const $ = (id) => document.getElementById(id);
+ 
++  const telaAbrindo = $("tela-abrindo");
+   const telaEntrada = $("tela-entrada");
+   const telaApp = $("tela-app");
++  const ESPERA_ABERTURA = 8000;
+ 
+   let cliente = null;
+   let usuario = null;
+@@ -160,6 +162,7 @@
+   function mostrarEntrada() {
+     usuario = null;
+     gastos = [];
++    telaAbrindo.hidden = true;
+     telaApp.hidden = true;
+     telaEntrada.hidden = false;
+     $("senha").value = "";
+@@ -168,6 +171,7 @@
+   function mostrarApp(user) {
+     const trocouDeUsuario = !usuario || usuario.id !== user.id;
+     usuario = user;
++    telaAbrindo.hidden = true;
+     telaEntrada.hidden = true;
+     telaApp.hidden = false;
+     avisar($("aviso-entrada"), "");
+@@ -528,6 +532,7 @@
+     desenharCategorias();
+ 
+     if (!window.supabase || !cfg.SUPABASE_URL || !cfg.SUPABASE_CHAVE_PUBLICA) {
++      telaAbrindo.hidden = true;
+       telaEntrada.hidden = false;
+       avisar($("aviso-entrada"), "Não consegui carregar o app. Confira a internet e recarregue a página.");
+       travarEntrada(true);
+@@ -536,6 +541,13 @@
+ 
+     cliente = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_CHAVE_PUBLICA);
+ 
++    // Se o login não responder a tempo, sai da tela de abertura com uma frase.
++    setTimeout(() => {
++      if (telaAbrindo.hidden) return;
++      mostrarEntrada();
++      avisar($("aviso-entrada"), "Não consegui conectar. Confira a internet e toque em Entrar de novo.");
++    }, ESPERA_ABERTURA);
++
+     // O setTimeout evita travar o Supabase, que não aceita consultas dentro deste aviso.
+     cliente.auth.onAuthStateChange((_evento, sessao) => {
+       setTimeout(() => {
+diff --git a/app/estilo.css b/app/estilo.css
+index 1a6668b..b89f972 100644
+--- a/app/estilo.css
++++ b/app/estilo.css
+@@ -49,6 +49,7 @@ p { margin: 0; }
+   gap: 8px;
+ }
+ .entrada-icone { width: 64px; height: 64px; margin-bottom: 8px; }
++.abrindo { align-items: center; color: var(--sutil); }
+ .entrada-caixa h1 { font-size: 1.6rem; }
+ .entrada-caixa form { margin-top: 16px; }
+ 
+diff --git a/app/index.html b/app/index.html
+index 56da96b..1aa4fba 100644
+--- a/app/index.html
++++ b/app/index.html
+@@ -12,6 +12,14 @@
+ </head>
+ <body>
+ 
++  <!-- Tela de abertura: aparece até o login responder -->
++  <main id="tela-abrindo" class="tela">
++    <div class="entrada-caixa abrindo">
++      <img src="icone.svg" alt="" class="entrada-icone">
++      <p>Abrindo o app…</p>
++    </div>
++  </main>
++
+   <!-- Tela de entrada -->
+   <main id="tela-entrada" class="tela" hidden>
+     <div class="entrada-caixa">

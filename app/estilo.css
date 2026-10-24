@@ -49,6 +49,7 @@ p { margin: 0; }
   gap: 8px;
 }
 .entrada-icone { width: 64px; height: 64px; margin-bottom: 8px; }
+.abrindo { align-items: center; color: var(--sutil); }
 .entrada-caixa h1 { font-size: 1.6rem; }
 .entrada-caixa form { margin-top: 16px; }
 
@@ -136,6 +137,10 @@ input[type="date"] { color-scheme: dark; }
   gap: 12px;
   border-top: 1px solid var(--borda);
   padding-top: 12px;
+}
+.falha-carga {
+  border-top: 1px solid var(--borda);
+  margin-top: 12px;
 }
 .total-menor {
   font-size: 1.25rem;

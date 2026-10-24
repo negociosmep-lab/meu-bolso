@@ -1,0 +1,94 @@
+diff --git a/app/app.js b/app/app.js
+index fca2ded..07c7109 100644
+--- a/app/app.js
++++ b/app/app.js
+@@ -178,11 +178,18 @@
+     avisar($("aviso-entrada"), "");
+     if (trocouDeUsuario) {
+       $("data").value = periodos().hoje;
++      prepararValor();
+       carregarGastos();
+       carregarResumo();
+     }
+   }
+ 
++  function prepararValor() {
++    // Deixa o campo do valor pronto para digitar.
++    // No iPhone, o sistema só abre o teclado depois de um toque no campo.
++    $("valor").focus({ preventScroll: true });
++  }
++
+   // ---------- Gastos ----------
+ 
+   async function carregarGastos() {
+@@ -392,6 +399,7 @@
+       $("data").value = periodos().hoje;
+       categoriaEscolhida = null;
+       $("categorias").querySelectorAll(".categoria").forEach((b) => b.setAttribute("aria-checked", "false"));
++      prepararValor();
+       await carregarGastos();
+     } catch (erro) {
+       avisar(aviso, frase(erro));
+diff --git a/app/index.html b/app/index.html
+index 620b216..99f4818 100644
+--- a/app/index.html
++++ b/app/index.html
+@@ -65,12 +65,7 @@
+       </div>
+     </section>
+ 
+-    <section class="cartao" aria-label="Gastos do mês por categoria">
+-      <h2>Por categoria</h2>
+-      <ul id="barras" class="barras"></ul>
+-    </section>
+-
+-    <!-- Lançar à mão -->
++    <!-- Lançar à mão: logo abaixo dos totais, para lançar logo depois de pagar -->
+     <section class="cartao" aria-label="Lançar à mão">
+       <h2>Lançar à mão</h2>
+       <form id="form-gasto" novalidate>
+@@ -87,19 +82,9 @@
+       <p id="aviso-gasto" class="aviso" role="status" hidden></p>
+     </section>
+ 
+-    <!-- Assistente -->
+-    <section class="cartao assistente" aria-label="Assistente">
+-      <h2>Assistente</h2>
+-      <p class="sutil">Escreva um gasto ou uma pergunta, ou mande a foto do cupom. A foto não é guardada.</p>
+-      <form id="form-assistente" novalidate>
+-        <input id="frase" type="text" placeholder="Ex.: mercado 50 hoje" autocomplete="off" maxlength="500">
+-        <div class="linha-botoes">
+-          <button type="submit" id="botao-enviar" class="botao secundario">Enviar</button>
+-          <button type="button" id="botao-foto" class="botao secundario">Foto do cupom</button>
+-        </div>
+-        <input id="arquivo-foto" type="file" accept="image/*" hidden>
+-      </form>
+-      <p id="aviso-assistente" class="aviso" role="status" hidden></p>
++    <section class="cartao" aria-label="Gastos do mês por categoria">
++      <h2>Por categoria</h2>
++      <ul id="barras" class="barras"></ul>
+     </section>
+ 
+     <!-- Resumo da semana: escondido enquanto não houver resumo -->
+@@ -115,6 +100,21 @@
+       <p id="lista-vazia" class="sutil" hidden>Nenhum gasto neste mês ainda.</p>
+       <p id="aviso-lista" class="aviso" role="alert" hidden></p>
+     </section>
++
++    <!-- Assistente: por último, como no briefing -->
++    <section class="cartao assistente" aria-label="Assistente">
++      <h2>Assistente</h2>
++      <p class="sutil">Escreva um gasto ou uma pergunta, ou mande a foto do cupom. A foto não é guardada.</p>
++      <form id="form-assistente" novalidate>
++        <input id="frase" type="text" placeholder="Ex.: mercado 50 hoje" autocomplete="off" maxlength="500">
++        <div class="linha-botoes">
++          <button type="submit" id="botao-enviar" class="botao secundario">Enviar</button>
++          <button type="button" id="botao-foto" class="botao secundario">Foto do cupom</button>
++        </div>
++        <input id="arquivo-foto" type="file" accept="image/*" hidden>
++      </form>
++      <p id="aviso-assistente" class="aviso" role="status" hidden></p>
++    </section>
+   </main>
+ 
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>

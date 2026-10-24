@@ -7,12 +7,15 @@
   const cfg = window.MEU_BOLSO || {};
   const $ = (id) => document.getElementById(id);
 
+  const telaAbrindo = $("tela-abrindo");
   const telaEntrada = $("tela-entrada");
   const telaApp = $("tela-app");
+  const ESPERA_ABERTURA = 8000;
 
   let cliente = null;
   let usuario = null;
   let gastos = [];
+  let falhouAoCarregar = false;
   let categoriaEscolhida = null;
 
   const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -160,6 +163,7 @@
   function mostrarEntrada() {
     usuario = null;
     gastos = [];
+    telaAbrindo.hidden = true;
     telaApp.hidden = true;
     telaEntrada.hidden = false;
     $("senha").value = "";
@@ -168,14 +172,22 @@
   function mostrarApp(user) {
     const trocouDeUsuario = !usuario || usuario.id !== user.id;
     usuario = user;
+    telaAbrindo.hidden = true;
     telaEntrada.hidden = true;
     telaApp.hidden = false;
     avisar($("aviso-entrada"), "");
     if (trocouDeUsuario) {
       $("data").value = periodos().hoje;
+      prepararValor();
       carregarGastos();
       carregarResumo();
     }
+  }
+
+  function prepararValor() {
+    // Deixa o campo do valor pronto para digitar.
+    // No iPhone, o sistema só abre o teclado depois de um toque no campo.
+    $("valor").focus({ preventScroll: true });
   }
 
   // ---------- Gastos ----------
@@ -185,6 +197,8 @@
     // Busca desde o que vier primeiro: início do mês ou início da semana.
     const desde = p.inicioSemana < p.inicioMes ? p.inicioSemana : p.inicioMes;
     avisar($("aviso-lista"), "");
+    const botaoTentar = $("botao-tentar");
+    botaoTentar.disabled = true;
     try {
       const { data, error } = await cliente
         .from("gastos")
@@ -195,9 +209,15 @@
         .order("criado_em", { ascending: false });
       if (error) throw error;
       gastos = data || [];
+      falhouAoCarregar = false;
     } catch (erro) {
-      avisar($("aviso-lista"), frase(erro));
+      // Sem os gastos, não mostra R$ 0,00 nem "nenhum gasto": avisa no topo.
+      falhouAoCarregar = true;
+      $("texto-falha").textContent = `Não consegui carregar os gastos. ${frase(erro)}`;
+    } finally {
+      botaoTentar.disabled = false;
     }
+    $("falha-carga").hidden = !falhouAoCarregar;
     desenhar();
   }
 
@@ -213,10 +233,11 @@
     const daSemana = gastos.filter((g) => g.data >= p.inicioSemana && g.data <= p.hoje);
     const deHoje = gastos.filter((g) => g.data === p.hoje);
 
+    const mostrar = (lista) => (falhouAoCarregar ? "—" : moeda.format(somar(lista)));
     $("nome-mes").textContent = `Total de ${p.nomeMes}`;
-    $("total-mes").textContent = moeda.format(somar(doMes));
-    $("total-semana").textContent = moeda.format(somar(daSemana));
-    $("total-dia").textContent = moeda.format(somar(deHoje));
+    $("total-mes").textContent = mostrar(doMes);
+    $("total-semana").textContent = mostrar(daSemana);
+    $("total-dia").textContent = mostrar(deHoje);
 
     desenharBarras(doMes);
     desenharLista(doMes);
@@ -247,14 +268,14 @@
       const nome = document.createElement("span");
       nome.textContent = t.nome;
       const valor = document.createElement("strong");
-      valor.textContent = moeda.format(t.total);
+      valor.textContent = falhouAoCarregar ? "—" : moeda.format(t.total);
       cabeca.append(nome, valor);
 
       const trilho = document.createElement("div");
       trilho.className = "barra-trilho";
       const cheia = document.createElement("div");
       cheia.className = "barra-cheia";
-      cheia.style.width = maior > 0 ? `${(t.total / maior) * 100}%` : "0%";
+      cheia.style.width = !falhouAoCarregar && maior > 0 ? `${(t.total / maior) * 100}%` : "0%";
       trilho.append(cheia);
 
       li.append(cabeca, trilho);
@@ -265,7 +286,8 @@
   function desenharLista(doMes) {
     const ul = $("lista");
     ul.replaceChildren();
-    $("lista-vazia").hidden = doMes.length > 0;
+    $("lista-vazia").hidden = falhouAoCarregar || doMes.length > 0;
+    if (falhouAoCarregar) return;
 
     doMes.forEach((g) => {
       const li = document.createElement("li");
@@ -377,6 +399,7 @@
       $("data").value = periodos().hoje;
       categoriaEscolhida = null;
       $("categorias").querySelectorAll(".categoria").forEach((b) => b.setAttribute("aria-checked", "false"));
+      prepararValor();
       await carregarGastos();
     } catch (erro) {
       avisar(aviso, frase(erro));
@@ -521,6 +544,7 @@
     $("form-entrada").addEventListener("submit", entrar);
     $("botao-criar").addEventListener("click", criarConta);
     $("botao-sair").addEventListener("click", sair);
+    $("botao-tentar").addEventListener("click", carregarGastos);
     $("form-gasto").addEventListener("submit", salvarGasto);
     $("form-assistente").addEventListener("submit", enviarFrase);
     $("botao-foto").addEventListener("click", () => $("arquivo-foto").click());
@@ -528,6 +552,7 @@
     desenharCategorias();
 
     if (!window.supabase || !cfg.SUPABASE_URL || !cfg.SUPABASE_CHAVE_PUBLICA) {
+      telaAbrindo.hidden = true;
       telaEntrada.hidden = false;
       avisar($("aviso-entrada"), "Não consegui carregar o app. Confira a internet e recarregue a página.");
       travarEntrada(true);
@@ -535,6 +560,13 @@
     }
 
     cliente = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_CHAVE_PUBLICA);
+
+    // Se o login não responder a tempo, sai da tela de abertura com uma frase.
+    setTimeout(() => {
+      if (telaAbrindo.hidden) return;
+      mostrarEntrada();
+      avisar($("aviso-entrada"), "Não consegui conectar. Confira a internet e toque em Entrar de novo.");
+    }, ESPERA_ABERTURA);
 
     // O setTimeout evita travar o Supabase, que não aceita consultas dentro deste aviso.
     cliente.auth.onAuthStateChange((_evento, sessao) => {

@@ -1,0 +1,118 @@
+diff --git a/app/app.js b/app/app.js
+index 9321132..fca2ded 100644
+--- a/app/app.js
++++ b/app/app.js
+@@ -15,6 +15,7 @@
+   let cliente = null;
+   let usuario = null;
+   let gastos = [];
++  let falhouAoCarregar = false;
+   let categoriaEscolhida = null;
+ 
+   const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+@@ -189,6 +190,8 @@
+     // Busca desde o que vier primeiro: início do mês ou início da semana.
+     const desde = p.inicioSemana < p.inicioMes ? p.inicioSemana : p.inicioMes;
+     avisar($("aviso-lista"), "");
++    const botaoTentar = $("botao-tentar");
++    botaoTentar.disabled = true;
+     try {
+       const { data, error } = await cliente
+         .from("gastos")
+@@ -199,9 +202,15 @@
+         .order("criado_em", { ascending: false });
+       if (error) throw error;
+       gastos = data || [];
++      falhouAoCarregar = false;
+     } catch (erro) {
+-      avisar($("aviso-lista"), frase(erro));
++      // Sem os gastos, não mostra R$ 0,00 nem "nenhum gasto": avisa no topo.
++      falhouAoCarregar = true;
++      $("texto-falha").textContent = `Não consegui carregar os gastos. ${frase(erro)}`;
++    } finally {
++      botaoTentar.disabled = false;
+     }
++    $("falha-carga").hidden = !falhouAoCarregar;
+     desenhar();
+   }
+ 
+@@ -217,10 +226,11 @@
+     const daSemana = gastos.filter((g) => g.data >= p.inicioSemana && g.data <= p.hoje);
+     const deHoje = gastos.filter((g) => g.data === p.hoje);
+ 
++    const mostrar = (lista) => (falhouAoCarregar ? "—" : moeda.format(somar(lista)));
+     $("nome-mes").textContent = `Total de ${p.nomeMes}`;
+-    $("total-mes").textContent = moeda.format(somar(doMes));
+-    $("total-semana").textContent = moeda.format(somar(daSemana));
+-    $("total-dia").textContent = moeda.format(somar(deHoje));
++    $("total-mes").textContent = mostrar(doMes);
++    $("total-semana").textContent = mostrar(daSemana);
++    $("total-dia").textContent = mostrar(deHoje);
+ 
+     desenharBarras(doMes);
+     desenharLista(doMes);
+@@ -251,14 +261,14 @@
+       const nome = document.createElement("span");
+       nome.textContent = t.nome;
+       const valor = document.createElement("strong");
+-      valor.textContent = moeda.format(t.total);
++      valor.textContent = falhouAoCarregar ? "—" : moeda.format(t.total);
+       cabeca.append(nome, valor);
+ 
+       const trilho = document.createElement("div");
+       trilho.className = "barra-trilho";
+       const cheia = document.createElement("div");
+       cheia.className = "barra-cheia";
+-      cheia.style.width = maior > 0 ? `${(t.total / maior) * 100}%` : "0%";
++      cheia.style.width = !falhouAoCarregar && maior > 0 ? `${(t.total / maior) * 100}%` : "0%";
+       trilho.append(cheia);
+ 
+       li.append(cabeca, trilho);
+@@ -269,7 +279,8 @@
+   function desenharLista(doMes) {
+     const ul = $("lista");
+     ul.replaceChildren();
+-    $("lista-vazia").hidden = doMes.length > 0;
++    $("lista-vazia").hidden = falhouAoCarregar || doMes.length > 0;
++    if (falhouAoCarregar) return;
+ 
+     doMes.forEach((g) => {
+       const li = document.createElement("li");
+@@ -525,6 +536,7 @@
+     $("form-entrada").addEventListener("submit", entrar);
+     $("botao-criar").addEventListener("click", criarConta);
+     $("botao-sair").addEventListener("click", sair);
++    $("botao-tentar").addEventListener("click", carregarGastos);
+     $("form-gasto").addEventListener("submit", salvarGasto);
+     $("form-assistente").addEventListener("submit", enviarFrase);
+     $("botao-foto").addEventListener("click", () => $("arquivo-foto").click());
+diff --git a/app/estilo.css b/app/estilo.css
+index b89f972..b55a216 100644
+--- a/app/estilo.css
++++ b/app/estilo.css
+@@ -138,6 +138,10 @@ input[type="date"] { color-scheme: dark; }
+   border-top: 1px solid var(--borda);
+   padding-top: 12px;
+ }
++.falha-carga {
++  border-top: 1px solid var(--borda);
++  margin-top: 12px;
++}
+ .total-menor {
+   font-size: 1.25rem;
+   font-weight: 700;
+diff --git a/app/index.html b/app/index.html
+index 1aa4fba..620b216 100644
+--- a/app/index.html
++++ b/app/index.html
+@@ -59,6 +59,10 @@
+           <p class="total-menor" id="total-dia">R$ 0,00</p>
+         </div>
+       </div>
++      <div id="falha-carga" class="falha-carga" role="alert" hidden>
++        <p id="texto-falha" class="aviso"></p>
++        <button type="button" id="botao-tentar" class="botao secundario">Tentar de novo</button>
++      </div>
+     </section>
+ 
+     <section class="cartao" aria-label="Gastos do mês por categoria">

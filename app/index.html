@@ -12,6 +12,14 @@
 </head>
 <body>
 
+  <!-- Tela de abertura: aparece até o login responder -->
+  <main id="tela-abrindo" class="tela">
+    <div class="entrada-caixa abrindo">
+      <img src="icone.svg" alt="" class="entrada-icone">
+      <p>Abrindo o app…</p>
+    </div>
+  </main>
+
   <!-- Tela de entrada -->
   <main id="tela-entrada" class="tela" hidden>
     <div class="entrada-caixa">
@@ -51,14 +59,13 @@
           <p class="total-menor" id="total-dia">R$ 0,00</p>
         </div>
       </div>
+      <div id="falha-carga" class="falha-carga" role="alert" hidden>
+        <p id="texto-falha" class="aviso"></p>
+        <button type="button" id="botao-tentar" class="botao secundario">Tentar de novo</button>
+      </div>
     </section>
 
-    <section class="cartao" aria-label="Gastos do mês por categoria">
-      <h2>Por categoria</h2>
-      <ul id="barras" class="barras"></ul>
-    </section>
-
-    <!-- Lançar à mão -->
+    <!-- Lançar à mão: logo abaixo dos totais, para lançar logo depois de pagar -->
     <section class="cartao" aria-label="Lançar à mão">
       <h2>Lançar à mão</h2>
       <form id="form-gasto" novalidate>
@@ -75,19 +82,9 @@
       <p id="aviso-gasto" class="aviso" role="status" hidden></p>
     </section>
 
-    <!-- Assistente -->
-    <section class="cartao assistente" aria-label="Assistente">
-      <h2>Assistente</h2>
-      <p class="sutil">Escreva um gasto ou uma pergunta, ou mande a foto do cupom. A foto não é guardada.</p>
-      <form id="form-assistente" novalidate>
-        <input id="frase" type="text" placeholder="Ex.: mercado 50 hoje" autocomplete="off" maxlength="500">
-        <div class="linha-botoes">
-          <button type="submit" id="botao-enviar" class="botao secundario">Enviar</button>
-          <button type="button" id="botao-foto" class="botao secundario">Foto do cupom</button>
-        </div>
-        <input id="arquivo-foto" type="file" accept="image/*" hidden>
-      </form>
-      <p id="aviso-assistente" class="aviso" role="status" hidden></p>
+    <section class="cartao" aria-label="Gastos do mês por categoria">
+      <h2>Por categoria</h2>
+      <ul id="barras" class="barras"></ul>
     </section>
 
     <!-- Resumo da semana: escondido enquanto não houver resumo -->
@@ -102,6 +99,21 @@
       <ul id="lista" class="lista"></ul>
       <p id="lista-vazia" class="sutil" hidden>Nenhum gasto neste mês ainda.</p>
       <p id="aviso-lista" class="aviso" role="alert" hidden></p>
+    </section>
+
+    <!-- Assistente: por último, como no briefing -->
+    <section class="cartao assistente" aria-label="Assistente">
+      <h2>Assistente</h2>
+      <p class="sutil">Escreva um gasto ou uma pergunta, ou mande a foto do cupom. A foto não é guardada.</p>
+      <form id="form-assistente" novalidate>
+        <input id="frase" type="text" placeholder="Ex.: mercado 50 hoje" autocomplete="off" maxlength="500">
+        <div class="linha-botoes">
+          <button type="submit" id="botao-enviar" class="botao secundario">Enviar</button>
+          <button type="button" id="botao-foto" class="botao secundario">Foto do cupom</button>
+        </div>
+        <input id="arquivo-foto" type="file" accept="image/*" hidden>
+      </form>
+      <p id="aviso-assistente" class="aviso" role="status" hidden></p>
     </section>
   </main>
 
