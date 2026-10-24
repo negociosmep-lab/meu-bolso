@@ -213,6 +213,23 @@ input[type="date"] { color-scheme: dark; }
   vertical-align: middle;
 }
 .assistente form { margin-top: 12px; }
+.linha-frase { display: flex; gap: 8px; align-items: stretch; }
+.linha-frase input { flex: 1; min-width: 0; }
+.botao-microfone {
+  flex: none;
+  width: 52px;
+  min-height: 44px;
+  font-size: 1.3rem;
+  color: var(--verde);
+  background: transparent;
+  border: 1px solid var(--verde);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.botao-microfone.escutando { background: var(--verde); color: #04130a; }
+.botao-microfone:disabled { opacity: 0.6; cursor: wait; }
+.botao-microfone:focus-visible { outline: 3px solid var(--verde); outline-offset: 2px; }
+.dica-microfone { margin-top: 8px; }
 .linha-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .linha-botoes .botao { margin-top: 10px; }
 .aviso-assistente { color: var(--verde); }

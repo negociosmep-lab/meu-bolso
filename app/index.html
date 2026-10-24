@@ -106,7 +106,11 @@
       <h2>Assistente</h2>
       <p class="sutil">Escreva um gasto ou uma pergunta, ou mande a foto do cupom. A foto não é guardada.</p>
       <form id="form-assistente" novalidate>
-        <input id="frase" type="text" placeholder="Ex.: mercado 50 hoje" autocomplete="off" maxlength="500">
+        <div class="linha-frase">
+          <input id="frase" type="text" placeholder="Ex.: mercado 50 hoje" autocomplete="off" maxlength="500" aria-label="Gasto ou pergunta">
+          <button type="button" id="botao-microfone" class="botao-microfone" aria-label="Falar o gasto" aria-pressed="false">🎤</button>
+        </div>
+        <p id="dica-microfone" class="sutil dica-microfone" hidden>Use o microfone do teclado do celular.</p>
         <div class="linha-botoes">
           <button type="submit" id="botao-enviar" class="botao secundario">Enviar</button>
           <button type="button" id="botao-foto" class="botao secundario">Foto do cupom</button>

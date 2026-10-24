@@ -461,6 +461,7 @@
   function travarAssistente(travar) {
     $("botao-enviar").disabled = travar;
     $("botao-foto").disabled = travar;
+    $("botao-microfone").disabled = travar;
   }
 
   async function perguntarAoAssistente(mensagem, imagem) {
@@ -525,6 +526,96 @@
     perguntarAoAssistente(mensagem, null);
   }
 
+  // ---------- Microfone (reconhecimento de voz do navegador) ----------
+
+  const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const EXEMPLO_FRASE = "Ex.: mercado 50 hoje";
+  let escuta = null;
+
+  function fraseMicrofone(codigo) {
+    if (codigo === "not-allowed" || codigo === "service-not-allowed") {
+      return "O navegador não deixou usar o microfone. Permita o microfone para este site nas configurações do navegador e tente de novo.";
+    }
+    if (codigo === "no-speech") return "Não ouvi nada. Toque no microfone e fale perto do celular.";
+    if (codigo === "audio-capture") return "Não encontrei o microfone. Confira se ele está ligado e tente de novo.";
+    if (codigo === "network") return "Sem internet para entender a voz. Confira a conexão ou digite o gasto.";
+    if (codigo === "aborted") return "";
+    return "Não consegui entender. Tente de novo ou digite o gasto.";
+  }
+
+  function marcarEscuta(ligada) {
+    const botao = $("botao-microfone");
+    botao.classList.toggle("escutando", ligada);
+    botao.setAttribute("aria-pressed", String(ligada));
+    botao.setAttribute("aria-label", ligada ? "Parar de escutar" : "Falar o gasto");
+    $("frase").placeholder = ligada ? "Escutando…" : EXEMPLO_FRASE;
+  }
+
+  function alternarEscuta() {
+    // Tocar de novo enquanto escuta para de escutar (e envia o que já ouviu).
+    if (escuta) {
+      escuta.stop();
+      return;
+    }
+
+    const aviso = $("aviso-assistente");
+    const campo = $("frase");
+    const r = new Reconhecimento();
+    r.lang = "pt-BR";
+    r.interimResults = true;
+    r.continuous = false;
+    r.maxAlternatives = 1;
+
+    let ouvido = "";
+    let falhou = false;
+
+    r.onresult = (evento) => {
+      let parcial = "";
+      for (let i = evento.resultIndex; i < evento.results.length; i++) {
+        const trecho = evento.results[i][0].transcript;
+        if (evento.results[i].isFinal) ouvido += trecho;
+        else parcial += trecho;
+      }
+      campo.value = (ouvido + parcial).trim();
+    };
+    r.onerror = (evento) => {
+      falhou = true;
+      avisar(aviso, fraseMicrofone(evento.error));
+    };
+    r.onend = () => {
+      escuta = null;
+      marcarEscuta(false);
+      if (falhou) return;
+      const mensagem = ouvido.trim() || campo.value.trim();
+      if (!mensagem) {
+        avisar(aviso, fraseMicrofone("no-speech"));
+        return;
+      }
+      campo.value = mensagem;
+      perguntarAoAssistente(mensagem, null);
+    };
+
+    campo.value = "";
+    avisar(aviso, "");
+    try {
+      r.start();
+    } catch (erro) {
+      avisar(aviso, fraseMicrofone(""));
+      return;
+    }
+    escuta = r;
+    marcarEscuta(true);
+  }
+
+  function prepararMicrofone() {
+    if (!Reconhecimento) {
+      $("botao-microfone").hidden = true;
+      $("dica-microfone").hidden = false;
+      return;
+    }
+    $("botao-microfone").addEventListener("click", alternarEscuta);
+  }
+
   async function enviarFoto() {
     const campo = $("arquivo-foto");
     const arquivo = campo.files && campo.files[0];
@@ -551,6 +642,7 @@
     $("form-assistente").addEventListener("submit", enviarFrase);
     $("botao-foto").addEventListener("click", () => $("arquivo-foto").click());
     $("arquivo-foto").addEventListener("change", enviarFoto);
+    prepararMicrofone();
     desenharCategorias();
 
     if (!window.supabase || !cfg.SUPABASE_URL || !cfg.SUPABASE_CHAVE_PUBLICA) {
